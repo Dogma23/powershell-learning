@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PowerShell Path — Learn PowerShell Interactively</title>
+  <meta name="description" content="A hands-on, interactive course that teaches you PowerShell from the ground up." />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <button id="menuToggle" class="menu-toggle" aria-label="Toggle menu">☰</button>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="brand">
+      <span class="brand-logo">&gt;_</span>
+      <div>
+        <div class="brand-name">PowerShell Path</div>
+        <div class="brand-sub">Learn by doing</div>
+      </div>
+    </div>
+
+    <div class="progress-box">
+      <div class="progress-label">
+        <span>Your progress</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-track"><div id="progressBar" class="progress-fill"></div></div>
+    </div>
+
+    <nav id="lessonNav" class="lesson-nav" aria-label="Lessons"></nav>
+
+    <button id="resetProgress" class="reset-btn">Reset progress</button>
+  </aside>
+
+  <main class="content">
+    <article id="lessonView" class="lesson"></article>
+
+    <div class="lesson-footer">
+      <button id="prevBtn" class="nav-btn">← Previous</button>
+      <button id="completeBtn" class="complete-btn">Mark complete ✓</button>
+      <button id="nextBtn" class="nav-btn">Next →</button>
+    </div>
+  </main>
+
+  <script src="js/lessons.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
