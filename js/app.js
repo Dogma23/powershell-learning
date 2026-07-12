@@ -3,6 +3,7 @@
   "use strict";
 
   const STORAGE_KEY = "psPathProgress";
+  const LAST_KEY = "psPathLast";
   const view = document.getElementById("lessonView");
   const nav = document.getElementById("lessonNav");
   const progressBar = document.getElementById("progressBar");
@@ -17,6 +18,18 @@
   let current = 0;
 
   /* ---------- progress persistence ---------- */
+  // Is localStorage actually usable? (Private mode / blocked cookies throw here.)
+  const storageOK = (function () {
+    try {
+      const k = "__psPathTest__";
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  })();
+
   function loadDone() {
     try {
       return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
@@ -25,7 +38,34 @@
     }
   }
   function saveDone(set) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...set]));
+    } catch (e) {
+      /* storage unavailable — handled by the banner */
+    }
+  }
+  function saveLast(index) {
+    try {
+      localStorage.setItem(LAST_KEY, String(index));
+    } catch (e) {}
+  }
+  function loadLast() {
+    try {
+      const v = parseInt(localStorage.getItem(LAST_KEY), 10);
+      return isNaN(v) ? -1 : v;
+    } catch (e) {
+      return -1;
+    }
+  }
+  // Mark a lesson complete (idempotent) and refresh all the UI that depends on it.
+  function markDone(id) {
+    if (!done.has(id)) {
+      done.add(id);
+      saveDone(done);
+      refreshNavState();
+      refreshProgress();
+      updateCompleteBtn();
+    }
   }
   let done = loadDone();
 
@@ -76,6 +116,7 @@
 
     window.scrollTo({ top: 0, behavior: "smooth" });
     location.hash = lesson.id;
+    saveLast(current); // remember where the user is so we can restore it next visit
 
     prevBtn.disabled = current === 0;
     nextBtn.disabled = current === LESSONS.length - 1;
@@ -354,7 +395,10 @@
 
   /* ---------- controls ---------- */
   prevBtn.addEventListener("click", () => go(current - 1));
-  nextBtn.addEventListener("click", () => go(current + 1));
+  nextBtn.addEventListener("click", () => {
+    markDone(LESSONS[current].id); // finishing a lesson (moving on) counts as done
+    go(current + 1);
+  });
   completeBtn.addEventListener("click", () => {
     const id = LESSONS[current].id;
     if (done.has(id)) done.delete(id);
@@ -375,10 +419,25 @@
   });
   menuToggle.addEventListener("click", () => sidebar.classList.toggle("open"));
 
+  /* ---------- storage warning banner ---------- */
+  function showStorageWarning() {
+    const bar = document.createElement("div");
+    bar.className = "storage-warning";
+    bar.innerHTML =
+      "⚠️ Your browser is blocking local storage (this often happens in " +
+      "<strong>Private / Incognito</strong> mode), so your progress can't be saved " +
+      "on this device. Open the site in a normal browser window to keep your progress.";
+    document.body.appendChild(bar);
+  }
+
   /* ---------- boot ---------- */
   buildNav();
   refreshProgress();
+  if (!storageOK) showStorageWarning();
+
+  // Priority for which lesson to open: URL hash > last saved position > first lesson.
   const startId = location.hash.replace("#", "");
-  const startIdx = LESSONS.findIndex((l) => l.id === startId);
-  go(startIdx >= 0 ? startIdx : 0);
+  let startIdx = LESSONS.findIndex((l) => l.id === startId);
+  if (startIdx < 0) startIdx = loadLast();
+  go(startIdx >= 0 && startIdx < LESSONS.length ? startIdx : 0);
 })();
